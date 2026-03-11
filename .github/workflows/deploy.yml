@@ -1,0 +1,39 @@
+name: Deploy Next.js to Virtualmin
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /home/dollartools/public_html
+            # In case it's a new repo on server
+            if [ ! -d ".git" ]; then
+              git clone https://github.com/frankireri/Dollartoolsgpt.git .
+            else
+              git pull origin main
+            fi
+            
+            # Install dependencies and build
+            npm install
+            npm run build
+            
+            # Restart the app (Assuming PM2 is used)
+            if pm2 list | grep -q "dollartools"; then
+              pm2 restart dollartools
+            else
+              pm2 start npm --name "dollartools" -- start
+            fi
