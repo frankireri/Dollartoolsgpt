@@ -7,9 +7,9 @@ import { adminDb } from "@/lib/firebase-admin";
 const USER_FILES_DIR = process.env.USER_FILES_PATH || join(process.cwd(), "user-files");
 
 export async function GET(
-    req: NextRequest,
-    { params }: { params: { projectId: string } }
-) {
+     req: NextRequest,
+     { params }: { params: Promise<{ projectId: string }> }
+ ) {
     try {
         const authHeader = req.headers.get("authorization");
         if (!authHeader?.startsWith("Bearer ")) {
@@ -83,9 +83,9 @@ export async function GET(
 }
 
 export async function DELETE(
-    req: NextRequest,
-    { params }: { params: { projectId: string } }
-) {
+     req: NextRequest,
+     { params }: { params: Promise<{ projectId: string }> }
+ ) {
     try {
         const authHeader = req.headers.get("authorization");
         if (!authHeader?.startsWith("Bearer ")) {
