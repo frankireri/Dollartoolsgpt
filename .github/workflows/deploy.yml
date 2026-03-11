@@ -19,7 +19,7 @@ jobs:
           password: ${{ secrets.SSH_PASSWORD }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            cd /home/dollartools/public_html
+            cd /home/dollartoolsgpt/public_html
             # In case it's a new repo on server
             if [ ! -d ".git" ]; then
               git clone https://github.com/frankireri/Dollartoolsgpt.git .
