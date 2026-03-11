@@ -20,12 +20,13 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd /home/dollartoolsgpt/public_html
-            # In case it's a new repo on server
+            # Ensure git is initialized and remote is set correctly
             if [ ! -d ".git" ]; then
-              git clone https://github.com/frankireri/Dollartoolsgpt.git .
-            else
-              git pull origin main
+              git init
+              git remote add origin https://github.com/frankireri/Dollartoolsgpt.git
             fi
+            git fetch --all
+            git reset --hard origin/main
             
             # Create .env file from secret
             echo "${{ secrets.ENV_CONTENTS }}" > .env
