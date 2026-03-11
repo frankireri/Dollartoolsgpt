@@ -7,9 +7,10 @@ import { adminDb } from "@/lib/firebase-admin";
 const USER_FILES_DIR = process.env.USER_FILES_PATH || join(process.cwd(), "user-files");
 
 export async function GET(
-     req: NextRequest,
-     { params }: { params: Promise<{ projectId: string }> }
- ) {
+    req: NextRequest,
+    { params }: { params: Promise<{ projectId: string }> }
+) {
+    const { projectId } = await params;
     try {
         const authHeader = req.headers.get("authorization");
         if (!authHeader?.startsWith("Bearer ")) {
@@ -26,8 +27,6 @@ export async function GET(
         } catch (error) {
             return NextResponse.json({ error: "Invalid token" }, { status: 401 });
         }
-
-        const projectId = params.projectId;
 
         // Get project from Firestore
         const projectDoc = await adminDb.collection("projects").doc(projectId).get();
@@ -83,9 +82,10 @@ export async function GET(
 }
 
 export async function DELETE(
-     req: NextRequest,
-     { params }: { params: Promise<{ projectId: string }> }
- ) {
+    req: NextRequest,
+    { params }: { params: Promise<{ projectId: string }> }
+) {
+    const { projectId } = await params;
     try {
         const authHeader = req.headers.get("authorization");
         if (!authHeader?.startsWith("Bearer ")) {
@@ -102,8 +102,6 @@ export async function DELETE(
         } catch (error) {
             return NextResponse.json({ error: "Invalid token" }, { status: 401 });
         }
-
-        const projectId = params.projectId;
 
         // Get project from Firestore
         const projectDoc = await adminDb.collection("projects").doc(projectId).get();
