@@ -36,8 +36,6 @@ jobs:
             npm run build
             
             # Restart the app (Assuming PM2 is used)
-            if pm2 list | grep -q "dollartools"; then
-              pm2 restart dollartools
-            else
-              pm2 start npm --name "dollartools" -- start
-            fi
+            pm2 delete dollartools || true
+            pm2 start npm --name "dollartools" -- start -- -p 3012
+            pm2 save
