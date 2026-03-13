@@ -31,23 +31,26 @@ jobs:
             # Create .env file from secret
             echo "${{ secrets.ENV_CONTENTS }}" > .env
             
-            # Install dependencies and build
-            # Using npm install instead of ci to handle minor lockfile mismatches on server environment
+            # Install dependencies
             npm install --no-audit --no-fund
+            
+            # Ensure binaries are executable (fix for status 126)
+            chmod +x node_modules/.bin/* || true
+            
+            # Clean and build
             rm -rf .next
             NEXT_TELEMETRY_DISABLED=1 npm run build
             
-            # Fix permissions aggressively (Run as root via SSH)
-            # We must ensure the web user (often same as account name) owns everything
+            # Fix permissions aggressively for web access (THE 500 ERROR FIX)
             SITE_USER=$(stat -c '%U' .)
-            echo "Directoy owner is: $SITE_USER"
-            
             chown -R $SITE_USER:$SITE_USER .
-            chmod -R 755 .
-            # But files should be 644
+            
+            # Standard web permissions: 755 for dirs, 644 for files
+            find . -type d -exec chmod 755 {} \;
             find . -type f -exec chmod 644 {} \;
-            # Executables in node_modules and .next need to stay executable
-            find .next -type f -name "*.js" -exec chmod 755 {} \; 2>/dev/null || true
+            
+            # RESTORE EXECUTE BITS for bins so subsequent builds work
+            chmod +x node_modules/.bin/* || true
             
             # Restart the app
             pm2 delete dollartools || true
@@ -55,4 +58,3 @@ jobs:
             pm2 save
             
             echo "Deployment finished successfully."
-            ls -la . | head -n 20
