@@ -32,8 +32,14 @@ jobs:
             echo "${{ secrets.ENV_CONTENTS }}" > .env
             
             # Install dependencies and build
-            npm install
+            npm ci || npm install
+            rm -rf .next
             npm run build
+            
+            # Fix permissions (ensure files are readable by web server)
+            # Find the actual owner of the public_html directory and apply it
+            SITE_USER=$(stat -c '%U' .)
+            chown -R $SITE_USER:$SITE_USER .
             
             # Restart the app (Assuming PM2 is used)
             pm2 delete dollartools || true
