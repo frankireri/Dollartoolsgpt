@@ -29,13 +29,39 @@ import PercentageCalculator from "@/components/tools/PercentageCalculator";
 import BMICalculator from "@/components/tools/BMICalculator";
 import CurrencyConverter from "@/components/tools/CurrencyConverter";
 import CreditShield from "@/components/auth/CreditShield";
-import AIRewriter from "@/components/tools/AIRewriter";
-import AISummarizer from "@/components/tools/AISummarizer";
-import AIResumeBuilder from "@/components/tools/AIResumeBuilder";
 import PDFRotator from "@/components/tools/PDFRotator";
 import PDFPageManager from "@/components/tools/PDFPageManager";
 import PDFCompressor from "@/components/tools/PDFCompressor";
 import PDFEditor from "@/components/tools/PDFEditor";
+import AudioConverter from "@/components/tools/AudioConverter";
+import AudioTrimmer from "@/components/tools/AudioTrimmer";
+import VideoToMP3 from "@/components/tools/VideoToMP3";
+import VideoCompressor from "@/components/tools/VideoCompressor";
+import VideoToGIF from "@/components/tools/VideoToGIF";
+import VideoMuter from "@/components/tools/VideoMuter";
+import VideoTrimmer from "@/components/tools/VideoTrimmer";
+import VideoSpeedChanger from "@/components/tools/VideoSpeedChanger";
+import VideoReverse from "@/components/tools/VideoReverse";
+import VideoResizer from "@/components/tools/VideoResizer";
+import GIFToVideo from "@/components/tools/GIFToVideo";
+import AudioMerger from "@/components/tools/AudioMerger";
+import AudioBooster from "@/components/tools/AudioBooster";
+import AudioSpeedChanger from "@/components/tools/AudioSpeedChanger";
+import BacklinkChecker from "@/components/tools/BacklinkChecker";
+import AudioCompressor from "@/components/tools/AudioCompressor";
+import AudioReverse from "@/components/tools/AudioReverse";
+import SilenceRemover from "@/components/tools/SilenceRemover";
+import MP3TagEditor from "@/components/tools/MP3TagEditor";
+import AudioWaveformGenerator from "@/components/tools/AudioWaveformGenerator";
+import StereoMonoConverter from "@/components/tools/StereoMonoConverter";
+import AudioNoiseGate from "@/components/tools/AudioNoiseGate";
+import AudioEffects from "@/components/tools/AudioEffects";
+import MP3ToVideo from "@/components/tools/MP3ToVideo";
+import AudioStudio from "@/components/tools/AudioStudio";
+import BulkAudioConverter from "@/components/tools/BulkAudioConverter";
+import BulkImageOptimizer from "@/components/tools/BulkImageOptimizer";
+import BulkVideoToMP3 from "@/components/tools/BulkVideoToMP3";
+import BulkPDFToImage from "@/components/tools/BulkPDFToImage";
 interface ToolPageProps {
     params: Promise<{ slug: string }>;
 }
@@ -64,7 +90,7 @@ export default async function ToolPage({ params }: ToolPageProps) {
             case "image-converter": return <ImageConverter />;
             case "image-to-pdf": return <ImageToPDF />;
             case "pdf-to-image": return <PDFToImage />;
-            case "remove-duplicates": return <DuplicateRemover />;
+            case "duplicate-remover": return <DuplicateRemover />;
             case "text-formatter": return <TextFormatter />;
             case "url-base64": return <URLBase64Tool />;
             case "pdf-merge": return <PDFMerger />;
@@ -78,13 +104,39 @@ export default async function ToolPage({ params }: ToolPageProps) {
             case "percentage-calc": return <PercentageCalculator />;
             case "bmi-calc": return <BMICalculator />;
             case "currency-converter": return <CurrencyConverter />;
-            case "ai-rewriter": return <AIRewriter />;
-            case "ai-summarizer": return <AISummarizer />;
-            case "ai-resume": return <AIResumeBuilder />;
             case "pdf-rotate": return <PDFRotator />;
             case "pdf-page-manage": return <PDFPageManager />;
             case "pdf-compress": return <PDFCompressor />;
             case "pdf-editor": return <PDFEditor />;
+            case "audio-converter": return <AudioConverter />;
+            case "audio-trimmer": return <AudioTrimmer />;
+            case "video-to-mp3": return <VideoToMP3 />;
+            case "video-compressor": return <VideoCompressor />;
+            case "video-to-gif": return <VideoToGIF />;
+            case "video-muter": return <VideoMuter />;
+            case "video-trimmer": return <VideoTrimmer />;
+            case "video-speed": return <VideoSpeedChanger />;
+            case "video-reverse": return <VideoReverse />;
+            case "video-resize": return <VideoResizer />;
+            case "gif-to-video": return <GIFToVideo />;
+            case "audio-merger": return <AudioMerger />;
+            case "audio-booster": return <AudioBooster />;
+            case "audio-speed": return <AudioSpeedChanger />;
+            case "backlink-check": return <BacklinkChecker />;
+            case "audio-compress": return <AudioCompressor />;
+            case "audio-reverse": return <AudioReverse />;
+            case "audio-silence": return <SilenceRemover />;
+            case "audio-tags": return <MP3TagEditor />;
+            case "audio-waveform": return <AudioWaveformGenerator />;
+            case "audio-channels": return <StereoMonoConverter />;
+            case "audio-noise": return <AudioNoiseGate />;
+            case "audio-effects": return <AudioEffects />;
+            case "mp3-to-video": return <MP3ToVideo />;
+            case "audio-studio": return <AudioStudio />;
+            case "bulk-mp3-converter": return <BulkAudioConverter />;
+            case "bulk-image-optimizer": return <BulkImageOptimizer />;
+            case "bulk-video-to-mp3": return <BulkVideoToMP3 />;
+            case "bulk-pdf-to-image": return <BulkPDFToImage />;
             default:
                 return (
                     <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -97,7 +149,7 @@ export default async function ToolPage({ params }: ToolPageProps) {
 
     return (
         <ToolContainer tool={tool}>
-            <CreditShield slug={slug}>
+            <CreditShield slug={slug} requiresMembership={tool.requiresMembership}>
                 {renderTool()}
             </CreditShield>
         </ToolContainer>
