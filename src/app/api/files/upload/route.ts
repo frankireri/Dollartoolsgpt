@@ -3,7 +3,9 @@ import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
 import { existsSync } from "fs";
 import { v4 as uuidv4 } from "uuid";
-import { adminDb } from "@/lib/firebase-admin";
+import { getAdminDb, getAdminAuth } from "@/lib/firebase-admin";
+
+export const dynamic = 'force-dynamic';
 
 // Configure max file size (50MB)
 const MAX_FILE_SIZE = 50 * 1024 * 1024;
@@ -22,11 +24,15 @@ export async function POST(req: NextRequest) {
         const token = authHeader.split("Bearer ")[1];
 
         // Verify Firebase token (server-side)
-        const admin = await import("firebase-admin");
+        const adminAuth = getAdminAuth();
+        if (!adminAuth) {
+            return NextResponse.json({ error: "Server configuration error" }, { status: 500 });
+        }
+
         let userId: string;
 
         try {
-            const decodedToken = await admin.auth().verifyIdToken(token);
+            const decodedToken = await adminAuth.verifyIdToken(token);
             userId = decodedToken.uid;
         } catch (error) {
             return NextResponse.json({ error: "Invalid token" }, { status: 401 });
@@ -75,6 +81,13 @@ export async function POST(req: NextRequest) {
         const buffer = Buffer.from(bytes);
         await writeFile(filePath, buffer);
 
+        const adminDb = getAdminDb();
+        const admin = await import("firebase-admin");
+
+        if (!adminDb) {
+            return NextResponse.json({ error: "Server configuration error" }, { status: 500 });
+        }
+
         // Create Firestore record
         const projectData = {
             projectId,
@@ -83,8 +96,8 @@ export async function POST(req: NextRequest) {
             fileName: fileName || file.name,
             filePath: `projects/${userId}/${projectId}/${sanitizedFileName}`,
             fileSize: file.size,
-            createdAt: admin.firestore.FieldValue.serverTimestamp(),
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            createdAt: admin.default.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.default.firestore.FieldValue.serverTimestamp(),
         };
 
         await adminDb.collection("projects").doc(projectId).set(projectData);
@@ -105,8 +118,3 @@ export async function POST(req: NextRequest) {
     }
 }
 
-export const config = {
-    api: {
-        bodyParser: false,
-    },
-};
