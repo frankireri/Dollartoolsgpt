@@ -24,37 +24,29 @@ jobs:
             git config --global --add safe.directory /home/dollartoolsgpt/public_html || true
             cd /home/dollartoolsgpt/public_html
             
-            # Fetch and reset
+            # Fetch and reset (gets the optimized zip)
             git fetch --all
             git reset --hard origin/main
+            git clean -fd
+            
+            # Extract the optimized bundle
+            echo "Extracting deployment bundle..."
+            unzip -o dollartools-deploy-v2.zip -d .
             
             # Create .env file from secret
             echo "${{ secrets.ENV_CONTENTS }}" > .env
             
-            # Install dependencies
-            npm install --no-audit --no-fund
-            
-            # Ensure binaries are executable (fix for status 126)
-            chmod +x node_modules/.bin/* || true
-            
-            # Clean and build
-            rm -rf .next
-            NEXT_TELEMETRY_DISABLED=1 npm run build
-            
-            # Fix permissions aggressively for web access (THE 500 ERROR FIX)
+            # Fix permissions
             SITE_USER=$(stat -c '%U' .)
             chown -R $SITE_USER:$SITE_USER .
-            
-            # Standard web permissions: 755 for dirs, 644 for files
             find . -type d -exec chmod 755 {} \;
             find . -type f -exec chmod 644 {} \;
+            chmod +x node_modules/.bin/* 2>/dev/null || true
+            chmod +x server.js
             
-            # RESTORE EXECUTE BITS for bins so subsequent builds work
-            chmod +x node_modules/.bin/* || true
-            
-            # Restart the app
+            # Restart
             pm2 delete dollartools || true
-            pm2 start npm --name "dollartools" -- start -- -p 3012
+            pm2 start server.js --name "dollartools" -- -p 3012
             pm2 save
             
-            echo "Deployment finished successfully."
+            echo "Deployment finished via zip bundle."
