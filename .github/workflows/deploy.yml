@@ -14,7 +14,7 @@ jobs:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.SSH_HOST }}
+          host: 163.245.208.33
           username: ${{ secrets.SSH_USER }}
           password: ${{ secrets.SSH_PASSWORD }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
@@ -32,6 +32,10 @@ jobs:
             # Verify zip presence and size
             echo "--- SERVER FILE CHECK ---"
             ls -lh dollartools-deploy-v2.zip || echo "ERROR: Zip file not found!"
+            
+            # Clean slate (Delete everything EXCEPT the zip)
+            echo "Cleaning public_html for a fresh start..."
+            find . -maxdepth 1 ! -name 'dollartools-deploy-v2.zip' ! -name '.' -exec rm -rf {} +
             
             # Extract the optimized bundle (QUIETLY)
             echo "Extracting deployment bundle quietly..."
