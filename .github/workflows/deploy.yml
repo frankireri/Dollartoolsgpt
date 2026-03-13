@@ -18,7 +18,9 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           password: ${{ secrets.SSH_PASSWORD }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          command_timeout: 30m
           script: |
+            git config --global --add safe.directory /home/dollartoolsgpt/public_html
             cd /home/dollartoolsgpt/public_html
             # Ensure git is initialized and remote is set correctly
             if [ ! -d ".git" ]; then
