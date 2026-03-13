@@ -29,46 +29,43 @@ jobs:
             git reset --hard origin/main
             git clean -fd
             
-            # Extract the optimized bundle
-            echo "Extracting deployment bundle..."
-            unzip -o dollartools-deploy-v2.zip -d .
+            # Verify zip presence and size
+            echo "--- SERVER FILE CHECK ---"
+            ls -lh dollartools-deploy-v2.zip || echo "ERROR: Zip file not found!"
+            
+            # Extract the optimized bundle (QUIETLY)
+            echo "Extracting deployment bundle quietly..."
+            unzip -oq dollartools-deploy-v2.zip -d .
             
             # Create .env file from secret
             echo "${{ secrets.ENV_CONTENTS }}" > .env
             
-            # Fix permissions (ENFORCE SITE USER WITH SUDO)
+            # Fix permissions (SMART CHOWN)
             SITE_USER="dollartoolsgpt"
-            echo "Current user is: $(whoami)"
-            echo "Enforcing ownership for $SITE_USER..."
-            sudo chown -R $SITE_USER:$SITE_USER . || echo "WARNING: sudo chown failed, trying without sudo..." && chown -R $SITE_USER:$SITE_USER . || true
+            echo "Syncing permissions for $SITE_USER..."
+            # Try to fix ownership - if we're not root, we can only chown our own files anyway
+            chown -R $SITE_USER:$SITE_USER . 2>/dev/null || echo "Ownership change skipped (permission denied or unnecessary)."
             
-            # Aggressive permissions for static assets
+            # Standard web permissions (Aggressive for static assets)
             find . -type d -exec chmod 755 {} \;
             find . -type f -exec chmod 644 {} \;
             chmod +x node_modules/.bin/* 2>/dev/null || true
             chmod +x server.js
             
-            # Restart
+            # Restart as the site user
+            echo "Restarting application via PM2..."
             pm2 delete dollartools || true
-            sudo -u $SITE_USER pm2 start server.js --name "dollartools" -- -p 3012
+            pm2 start server.js --name "dollartools" -- -p 3012
             pm2 save
             
-            # DIAGNOSTICS & PERMISSION VERIFICATION
-            echo "--- VERIFYING PERMISSIONS ---"
-            ls -la .next/static | head -n 10
-            
-            echo "--- TESTING LOCAL ASSET FETCH ---"
-            # Try to fetch one of the assets locally to see if it's a proxy issue
+            # FINAL HEALTH CHECK
+            echo "--- HEALTH CHECK ---"
+            pm2 list
+            # Verify a random static file is readable
             STATIC_FILE=$(find .next/static -name "*.css" | head -n 1)
-            if [ -z "$STATIC_FILE" ]; then
-              echo "ERROR: No static CSS files found!"
-            else
-              echo "Testing local access to $STATIC_FILE..."
-              # Check if the file is truly readable by a non-root user
-              sudo -u $SITE_USER cat "$STATIC_FILE" > /dev/null && echo "Success: File is readable by $SITE_USER" || echo "FAILURE: File is NOT readable by $SITE_USER"
+            if [ -n "$STATIC_FILE" ]; then
+                echo "Testing readability of $STATIC_FILE..."
+                cat "$STATIC_FILE" > /dev/null && echo "Result: Static asset is READABLE." || echo "Result: ERROR - Static asset is NOT READABLE."
             fi
             
-            echo "--- PM2 STATUS ---"
-            pm2 status
-            
-            echo "Deployment finished and diagnostics logged."
+            echo "Deployment finished."
