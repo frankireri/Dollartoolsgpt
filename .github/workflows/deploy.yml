@@ -36,10 +36,13 @@ jobs:
             # Create .env file from secret
             echo "${{ secrets.ENV_CONTENTS }}" > .env
             
-            # Fix permissions (ENFORCE SITE USER)
+            # Fix permissions (ENFORCE SITE USER WITH SUDO)
             SITE_USER="dollartoolsgpt"
+            echo "Current user is: $(whoami)"
             echo "Enforcing ownership for $SITE_USER..."
-            chown -R $SITE_USER:$SITE_USER . || true
+            sudo chown -R $SITE_USER:$SITE_USER . || echo "WARNING: sudo chown failed, trying without sudo..." && chown -R $SITE_USER:$SITE_USER . || true
+            
+            # Aggressive permissions for static assets
             find . -type d -exec chmod 755 {} \;
             find . -type f -exec chmod 644 {} \;
             chmod +x node_modules/.bin/* 2>/dev/null || true
@@ -50,12 +53,22 @@ jobs:
             sudo -u $SITE_USER pm2 start server.js --name "dollartools" -- -p 3012
             pm2 save
             
-            # DIAGNOSTICS
-            echo "--- DIRECTORY STRUCTURE ---"
-            ls -R .next/static | head -n 50
+            # DIAGNOSTICS & PERMISSION VERIFICATION
+            echo "--- VERIFYING PERMISSIONS ---"
+            ls -la .next/static | head -n 10
+            
+            echo "--- TESTING LOCAL ASSET FETCH ---"
+            # Try to fetch one of the assets locally to see if it's a proxy issue
+            STATIC_FILE=$(find .next/static -name "*.css" | head -n 1)
+            if [ -z "$STATIC_FILE" ]; then
+              echo "ERROR: No static CSS files found!"
+            else
+              echo "Testing local access to $STATIC_FILE..."
+              # Check if the file is truly readable by a non-root user
+              sudo -u $SITE_USER cat "$STATIC_FILE" > /dev/null && echo "Success: File is readable by $SITE_USER" || echo "FAILURE: File is NOT readable by $SITE_USER"
+            fi
+            
             echo "--- PM2 STATUS ---"
             pm2 status
-            echo "--- RECENT LOGS ---"
-            pm2 logs dollartools --lines 50 --no-daemon & sleep 10 && kill $! || true
             
             echo "Deployment finished and diagnostics logged."
