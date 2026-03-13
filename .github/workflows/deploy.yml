@@ -18,15 +18,13 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           password: ${{ secrets.SSH_PASSWORD }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          command_timeout: 30m
+          command_timeout: 45m
           script: |
-            git config --global --add safe.directory /home/dollartoolsgpt/public_html
+            set -e
+            git config --global --add safe.directory /home/dollartoolsgpt/public_html || true
             cd /home/dollartoolsgpt/public_html
-            # Ensure git is initialized and remote is set correctly
-            if [ ! -d ".git" ]; then
-              git init
-              git remote add origin https://github.com/frankireri/Dollartoolsgpt.git
-            fi
+            
+            # Fetch and reset
             git fetch --all
             git reset --hard origin/main
             
@@ -36,14 +34,15 @@ jobs:
             # Install dependencies and build
             npm ci || npm install
             rm -rf .next
-            npm run build
+            NEXT_TELEMETRY_DISABLED=1 npm run build
             
-            # Fix permissions (ensure files are readable by web server)
-            # Find the actual owner of the public_html directory and apply it
+            # Fix permissions aggressively
             SITE_USER=$(stat -c '%U' .)
             chown -R $SITE_USER:$SITE_USER .
+            find . -type d -exec chmod 755 {} \;
+            find . -type f -exec chmod 644 {} \;
             
-            # Restart the app (Assuming PM2 is used)
+            # Restart the app
             pm2 delete dollartools || true
             pm2 start npm --name "dollartools" -- start -- -p 3012
             pm2 save
