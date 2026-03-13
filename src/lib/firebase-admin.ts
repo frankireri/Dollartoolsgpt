@@ -12,13 +12,10 @@ function initializeAdmin() {
     try {
         const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
         const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-        let privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n");
         
-        // Strip quotes if they were added by the shell or env file
-        if (privateKey?.startsWith('"') && privateKey?.endsWith('"')) {
-            privateKey = privateKey.substring(1, privateKey.length - 1);
-        }
-
+        // Multi-stage cleaning for the private key
+        let privateKey = process.env.FIREBASE_PRIVATE_KEY;
+        
         if (!projectId || !clientEmail || !privateKey) {
             console.error("Firebase Admin Error: Missing credentials in .env.local", {
                 projectId: !!projectId,
@@ -27,6 +24,19 @@ function initializeAdmin() {
             });
             return false;
         }
+
+        // 1. Unescape literal \n strings
+        privateKey = privateKey.replace(/\\n/g, "\n");
+        
+        // 2. Remove surrounding quotes
+        privateKey = privateKey.trim();
+        if ((privateKey.startsWith('"') && privateKey.endsWith('"')) || 
+            (privateKey.startsWith("'") && privateKey.endsWith("'"))) {
+            privateKey = privateKey.substring(1, privateKey.length - 1);
+        }
+        
+        // 3. Final trim and newline check
+        privateKey = privateKey.trim();
 
         admin.initializeApp({
             credential: admin.credential.cert({
