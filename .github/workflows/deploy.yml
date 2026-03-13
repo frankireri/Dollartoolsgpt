@@ -36,9 +36,10 @@ jobs:
             # Create .env file from secret
             echo "${{ secrets.ENV_CONTENTS }}" > .env
             
-            # Fix permissions
-            SITE_USER=$(stat -c '%U' .)
-            chown -R $SITE_USER:$SITE_USER .
+            # Fix permissions (ENFORCE SITE USER)
+            SITE_USER="dollartoolsgpt"
+            echo "Enforcing ownership for $SITE_USER..."
+            chown -R $SITE_USER:$SITE_USER . || true
             find . -type d -exec chmod 755 {} \;
             find . -type f -exec chmod 644 {} \;
             chmod +x node_modules/.bin/* 2>/dev/null || true
@@ -46,7 +47,15 @@ jobs:
             
             # Restart
             pm2 delete dollartools || true
-            pm2 start server.js --name "dollartools" -- -p 3012
+            sudo -u $SITE_USER pm2 start server.js --name "dollartools" -- -p 3012
             pm2 save
             
-            echo "Deployment finished via zip bundle."
+            # DIAGNOSTICS
+            echo "--- DIRECTORY STRUCTURE ---"
+            ls -R .next/static | head -n 50
+            echo "--- PM2 STATUS ---"
+            pm2 status
+            echo "--- RECENT LOGS ---"
+            pm2 logs dollartools --lines 50 --no-daemon & sleep 10 && kill $! || true
+            
+            echo "Deployment finished and diagnostics logged."
